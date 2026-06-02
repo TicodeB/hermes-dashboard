@@ -1,3 +1,3 @@
-import type { Config } from "next";
-const config: Config = { devIndicators: false };
+import type { NextConfig } from "next";
+const config: NextConfig = { devIndicators: false };
 export default config;
