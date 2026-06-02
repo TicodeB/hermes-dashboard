@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --color-hermes-dark: #0f0f1a;
+  --color-hermes-darker: #0a0a14;
+  --color-hermes-card: #1a1a2e;
+  --color-hermes-card-hover: #222240;
+  --color-hermes-border: #2a2a4a;
+  --color-hermes-green: #4ade80;
+  --color-hermes-green-glow: rgba(74,222,128,0.15);
+  --color-hermes-purple: #a855f7;
+  --color-hermes-purple-glow: rgba(168,85,247,0.15);
+  --color-hermes-blue: #38bdf8;
+  --color-hermes-blue-glow: rgba(56,189,248,0.15);
+  --color-hermes-muted: #6b7280;
+  --color-hermes-text: #e5e7eb;
+  --color-hermes-text-secondary: #9ca3af;
+  --color-hermes-accent: #818cf8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--color-hermes-dark);
+  color: var(--color-hermes-text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+.flow-bg {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.flow-bg canvas { display: block; }
