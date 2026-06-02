@@ -302,6 +302,85 @@ async def get_session_detail(request: Request, session_id: str):
     }
 
 
+# ── Honcho Memory Endpoints ─────────────────────────────────
+
+HONCHO_MEMORY_PATH = os.path.join(os.path.dirname(__file__), "honcho_memory.json")
+
+def _load_honcho_memory() -> list[dict]:
+    """Load Honcho memory snapshot from JSON file."""
+    try:
+        with open(HONCHO_MEMORY_PATH) as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
+@app.get("/api/honcho/memory")
+async def get_honcho_memory():
+    """Full Honcho memory snapshot."""
+    return {"entries": _load_honcho_memory(), "total": len(_load_honcho_memory())}
+
+
+@app.get("/api/honcho/search")
+async def search_honcho_memory(q: str = Query(..., min_length=2)):
+    """Text search across Honcho memory entries."""
+    entries = _load_honcho_memory()
+    q_lower = q.lower()
+    results = []
+    for entry in entries:
+        score = 0
+        if q_lower in entry.get("content", "").lower():
+            score += 10
+        if q_lower in entry.get("tag", "").lower():
+            score += 5
+        if score > 0:
+            results.append({**entry, "score": score})
+    results.sort(key=lambda x: x["score"], reverse=True)
+    return {"query": q, "results": results, "total": len(results)}
+
+
+@app.get("/api/honcho/context")
+async def get_honcho_context(question: Optional[str] = Query(None)):
+    """Synthesized context summary from Honcho memory."""
+    entries = _load_honcho_memory()
+    # Group by tag
+    by_tag = {}
+    for e in entries:
+        tag = e["tag"]
+        if tag not in by_tag:
+            by_tag[tag] = []
+        by_tag[tag].append(e["content"])
+    
+    # Build context
+    context = {
+        "profile": "Samuel Vyhnanek — Entrepreneur, 15yr Bakery Ops, ADHD/Lean, 3 active missions",
+        "preferences": "Plan→Approve→Deploy, English only, no fluff, data-driven, premium quality",
+        "active_missions": {
+            "ecommerce": "CLOSED — SKU-001 oven liners cancelled",
+            "berea": "3,002 leads, 236 hot, Brevo CRM connected, outreach pending NemoCLaw bridge",
+            "leanta-ai": "3 niches validated, 0 proposals, dashboard live on Vercel"
+        },
+        "infrastructure": "Hetzner VPS (46.225.84.249), Caddy, Next.js 15, FastAPI, GitHub TicodeB, Vercel",
+        "tokens_stored": ["GITHUB_PAT", "VERCEL_TOKEN", "BREVO_API_KEY", "Zoho SMTP"],
+        "tags": by_tag,
+    }
+    
+    if question:
+        q = question.lower()
+        relevant = []
+        if "berea" in q or "lead" in q:
+            relevant.append("BEREA: 3,002 leads, 236 hot. Brevo connected. NemoCLaw agents need Telegram bridge to push leads.")
+        if "brevo" in q or "crm" in q:
+            relevant.append("Brevo CRM: 86 contacts, 0 segments. API key stored. Need 9 group segments created.")
+        if "dashboard" in q or "vercel" in q:
+            relevant.append("Dashboard live at https://hermes-dashboard.vercel.app. Auto-deploys from GitHub.")
+        if "sku" in q or "ecommerce" in q:
+            relevant.append("Ecommerce: SKU-001 closed by Samuel 2026-06-02. No active products.")
+        context["relevant"] = relevant
+    
+    return {"context": context, "question": question}
+
+
 # ── Dashboard Endpoints ─────────────────────────────────────
 
 @app.get("/api/dashboard/metrics")

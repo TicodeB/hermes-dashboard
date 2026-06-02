@@ -1,0 +1,14 @@
+[
+  {"tag": "IDENTITY", "content": "Samuel Vyhnanek — 15yr Bakery Ops (Irish Pride), CCT College Data Analytics 2026, ADHD/Lean-focused, English+Slovak"},
+  {"tag": "PROTOCOL", "content": "Plan → Approve → Deploy. GO/NO-GO decisions. No fluff. Conclusions first."},
+  {"tag": "BUSINESS", "content": "3 missions: SKU-001 Ecommerce (CLOSED), Penzión BEREA (236 hot leads pending Brevo), Leanta AI Agency (3 niches, 0 proposals)"},
+  {"tag": "BRAND", "content": "LEANTA: Navy #002366 + Gold #FFD700. Fooror.com dark gradient style. BEREA: warm earth+gold palette."},
+  {"tag": "EMAIL", "content": "hello@leanta.ie — Zoho paid plan €4.60/month. Zoho SMTP smtppro.zoho.com:587. Samuel.vyhnanek@gmail.com"},
+  {"tag": "BUDGET", "content": "€600 total budget. Revolut Business. Irish Sole Trader (CRO €20). Virtual Office Gorey/Dublin."},
+  {"tag": "SOURCE", "content": "CEE suppliers only — no Asia/UK. OEKO-TEX/GOTS certs, MOQ <100u, lead time <4w."},
+  {"tag": "DASHBOARD", "content": "Live at https://hermes-dashboard.vercel.app. API at https://hermes.46-225-84-249.sslip.io. GitHub: TicodeB/hermes-dashboard."},
+  {"tag": "BREVO", "content": "Brevo CRM connected — 86 contacts. API key stored. 9 group segments pending for Berea leads."},
+  {"tag": "NEMOCLAW", "content": "NemoCLaw agents run on Samuel's Mac. Nemotron-3 model. Berea outreach. Need Telegram bridge."},
+  {"tag": "DESIGN", "content": "Samuel drives visual design — do NOT attempt. Dark theme #0F0F1A, Obsidian Agentic Data-Layer reference."},
+  {"tag": "TECH", "content": "Next.js 15 / FastAPI / Vercel / Caddy / SQLite. OpenRouter for LLM. Node.js on Hetzner VPS."}
+]

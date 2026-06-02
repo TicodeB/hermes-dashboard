@@ -8,17 +8,18 @@ type Status = 'active' | 'idle' | 'stalled' | 'critical';
 
 export interface Metric {
   label: string;
-  value: number;
+  value: number | string;
   suffix?: string;
   prefix?: string;
 }
 
 interface MissionCardProps {
-  icon: React.ReactNode;
+  icon: string;
   name: string;
+  id?: string;
   status: Status;
-  metrics: [Metric, Metric, Metric];
-  alert?: string;
+  metrics: Metric[];
+  alert?: { level: string; text: string } | string;
   index?: number;
 }
 
@@ -99,7 +100,11 @@ export default function MissionCard({ icon, name, status, metrics, alert, index 
             <div key={i} className="rounded-lg p-2.5" style={{ background: 'rgba(15,15,26,0.4)' }}>
               <p className="text-xs" style={{ color: '#9ca3af' }}>{m.label}</p>
               <p className="text-lg font-bold text-white mt-0.5 font-mono tabular-nums">
-                <CountUp to={m.value} suffix={m.suffix} prefix={m.prefix} />
+                {typeof m.value === 'number' ? (
+                  <CountUp to={m.value} suffix={m.suffix} prefix={m.prefix} />
+                ) : (
+                  <span>{m.prefix || ''}{m.value}{m.suffix || ''}</span>
+                )}
               </p>
             </div>
           ))}
@@ -110,12 +115,16 @@ export default function MissionCard({ icon, name, status, metrics, alert, index 
           <div
             className="flex items-start gap-2 px-3 py-2 rounded-lg text-xs"
             style={{
-              background: status === 'critical' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
-              color: status === 'critical' ? '#ef4444' : '#f59e0b',
+              background: typeof alert === 'object' && alert.level === 'info' ? 'rgba(59,130,246,0.08)' :
+                typeof alert === 'object' && alert.level === 'ok' ? 'rgba(74,222,128,0.08)' :
+                status === 'critical' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
+              color: typeof alert === 'object' && alert.level === 'info' ? '#3b82f6' :
+                typeof alert === 'object' && alert.level === 'ok' ? '#4ade80' :
+                status === 'critical' ? '#ef4444' : '#f59e0b',
             }}
           >
             <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-            <span>{alert}</span>
+            <span>{typeof alert === 'string' ? alert : alert.text}</span>
           </div>
         )}
       </div>

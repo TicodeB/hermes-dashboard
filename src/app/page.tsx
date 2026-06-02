@@ -1,209 +1,198 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Briefcase, Brain } from 'lucide-react';
+import { Activity, Brain, Calendar, GitGraph, Layers, MessageSquare, Terminal, X, Search, BarChart3 } from 'lucide-react';
+
 import FlowField from '@/components/FlowField';
+import CountUp from '@/components/CountUp';
 import MissionCard from '@/components/MissionCard';
-import type { Metric } from '@/components/MissionCard';
 import AgentGraph from '@/components/AgentGraph';
 import LiveEventFeed from '@/components/LiveEventFeed';
+import TrafficLightBoard from '@/components/TrafficLightBoard';
+import GanttChart from '@/components/GanttChart';
+import MindMap from '@/components/MindMap';
+import HonchoPanel from '@/components/HonchoPanel';
 
 const TerminalPanel = dynamic(() => import('@/components/Terminal'), { ssr: false });
 
-type ViewMode = 'split' | 'terminal';
+type Panel = 'missions' | 'graph' | 'events' | 'traffic' | 'gantt' | 'mindmap' | 'honcho' | 'terminal';
 
-export default function Home() {
-  const [viewMode, setViewMode] = useState<ViewMode>('split');
+interface PanelConfig {
+  id: Panel;
+  icon: any;
+  label: string;
+  size: 'sm' | 'md' | 'lg' | 'full';
+}
 
-  const missions: {
-    icon: React.ReactNode;
-    name: string;
-    status: 'active' | 'idle' | 'critical';
-    metrics: [Metric, Metric, Metric];
-    alert?: string;
-  }[] = [
-    {
-      icon: <ShoppingCart size={20} />,
-      name: 'Ecommerce Operations',
-      status: 'active',
-      metrics: [
-        { label: 'Orders Today', value: 142 },
-        { label: 'Revenue', value: 12480, prefix: '$' },
-        { label: 'Conversion', value: 3.2, suffix: '%' },
-      ],
-      alert: 'Stripe webhook latency above threshold',
-    },
-    {
-      icon: <Briefcase size={20} />,
-      name: 'BEREA Lead Pipeline',
-      status: 'idle',
-      metrics: [
-        { label: 'New Leads', value: 45 },
-        { label: 'Enriched', value: 38 },
-        { label: 'Score Avg', value: 7.6, suffix: '/10' },
-      ],
-    },
-    {
-      icon: <Brain size={20} />,
-      name: 'Leanta AI Training',
-      status: 'critical',
-      metrics: [
-        { label: 'Epoch', value: 12 },
-        { label: 'Accuracy', value: 94.2, suffix: '%' },
-        { label: 'Token Usage', value: 872, suffix: 'K' },
-      ],
-      alert: 'Token budget at 87% — rate limit imminent',
-    },
-  ];
+const panels: PanelConfig[] = [
+  { id: 'missions', icon: Layers, label: 'Missions', size: 'lg' },
+  { id: 'graph', icon: GitGraph, label: 'Graph', size: 'lg' },
+  { id: 'traffic', icon: Activity, label: 'Tasks', size: 'md' },
+  { id: 'gantt', icon: Calendar, label: 'Timeline', size: 'lg' },
+  { id: 'mindmap', icon: Brain, label: 'Mind Map', size: 'md' },
+  { id: 'honcho', icon: Search, label: 'Memory', size: 'md' },
+  { id: 'events', icon: BarChart3, label: 'Events', size: 'sm' },
+  { id: 'terminal', icon: Terminal, label: 'Terminal', size: 'full' },
+];
+
+const sizeClasses: Record<string, string> = {
+  sm: 'col-span-1 row-span-1',
+  md: 'col-span-1 row-span-1 md:col-span-1 md:row-span-2',
+  lg: 'col-span-1 md:col-span-2 row-span-1 md:row-span-2',
+  full: 'col-span-1 md:col-span-2 row-span-2 md:row-span-3',
+};
+
+export default function Page() {
+  const [activePanels, setActivePanels] = useState<Set<Panel>>(new Set(['missions', 'graph', 'traffic', 'events']));
+  const [metrics, setMetrics] = useState({ sessions: 78, messages: 2090, agents: 3, success: 100, spend: 0 });
+
+  // Fetch live metrics
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const res = await fetch('https://hermes.46-225-84-249.sslip.io/api/dashboard/metrics');
+        const data = await res.json();
+        setMetrics({
+          sessions: data.total_sessions || 78,
+          messages: data.total_messages || 2090,
+          agents: data.active_agents || 3,
+          success: data.success_rate || 100,
+          spend: data.spend_month || 0,
+        });
+      } catch {}
+    };
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const togglePanel = (id: Panel) => {
+    const next = new Set(activePanels);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setActivePanels(next);
+  };
+
+  const isActive = (id: Panel) => activePanels.has(id);
 
   return (
-    <>
-      <FlowField />
+    <div className="min-h-screen bg-[#0F0F1A] text-white font-mono relative overflow-hidden">
+      {/* Background */}
+      <div className="fixed inset-0 z-0 opacity-40"><FlowField /></div>
 
-      <div className="relative z-10 min-h-screen">
+      {/* Content */}
+      <div className="relative z-10 p-4 md:p-6 max-w-7xl mx-auto">
         {/* Header */}
-        <header className="border-b" style={{ borderColor: 'rgba(42,42,74,0.4)', background: 'rgba(15,15,26,0.6)', backdropFilter: 'blur(12px)' }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-14 sm:h-16">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
-                  style={{ background: 'linear-gradient(135deg, #818cf8, #a855f7)', color: '#fff' }}
-                >
-                  H
-                </div>
-                <div>
-                  <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">HERMES</h1>
-                  <p className="text-[10px] sm:text-xs hidden sm:block" style={{ color: '#6b7280' }}>Mission Control · Multi-Agent Orchestration</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 sm:gap-3">
-                {/* View toggle */}
-                <div className="flex rounded-lg overflow-hidden text-xs" style={{ background: 'rgba(26,26,46,0.8)', border: '1px solid rgba(42,42,74,0.4)' }}>
-                  <button
-                    onClick={() => setViewMode('split')}
-                    className="px-2.5 sm:px-3 py-1.5 transition-colors cursor-pointer"
-                    style={{ background: viewMode === 'split' ? 'rgba(129,140,248,0.15)' : 'transparent', color: viewMode === 'split' ? '#818cf8' : '#6b7280' }}
-                  >
-                    Split
-                  </button>
-                  <button
-                    onClick={() => setViewMode('terminal')}
-                    className="px-2.5 sm:px-3 py-1.5 transition-colors cursor-pointer"
-                    style={{ background: viewMode === 'terminal' ? 'rgba(129,140,248,0.15)' : 'transparent', color: viewMode === 'terminal' ? '#818cf8' : '#6b7280' }}
-                  >
-                    Terminal
-                  </button>
-                </div>
-
-                {/* Status dot */}
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] sm:text-xs" style={{ background: 'rgba(74,222,128,0.08)', color: '#4ade80' }}>
-                  <div className="w-1.5 h-1.5 rounded-full bg-hermes-green animate-pulse" />
-                  <span className="hidden sm:inline">All Systems</span>
-                  <span>Online</span>
-                </div>
-              </div>
+        <header className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">
+              <span className="text-[#FFD700]">HERMES</span>
+              <span className="text-zinc-400 ml-2 text-sm font-normal">Mission Control</span>
+            </h1>
+            <p className="text-[10px] text-zinc-600 mt-0.5">v0.2 · Hetzner VPS · 3 missions active</p>
+          </div>
+          
+          {/* Quick metrics */}
+          <div className="flex gap-4 text-right">
+            <div className="text-center">
+              <div className="text-lg font-bold text-[#FFD700]"><CountUp to={metrics.sessions} duration={1} /></div>
+              <div className="text-[9px] text-zinc-500">sessions</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-emerald-400"><CountUp to={metrics.messages} duration={1} /></div>
+              <div className="text-[9px] text-zinc-500">messages</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-400">{metrics.agents}</div>
+              <div className="text-[9px] text-zinc-500">agents</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-zinc-300">€<CountUp to={metrics.spend} duration={1} /></div>
+              <div className="text-[9px] text-zinc-500">spend/mo</div>
             </div>
           </div>
         </header>
 
-        {/* Main content */}
-        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
-          <AnimatePresence mode="wait">
-            {viewMode === 'split' ? (
-              <motion.div
-                key="split"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                {/* Mission Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 sm:mb-6">
-                  {missions.map((mission, i) => (
-                    <MissionCard key={mission.name} {...mission} index={i} />
-                  ))}
+        {/* Panel toggle bar */}
+        <nav className="flex flex-wrap gap-1.5 mb-4 pb-4 border-b border-white/5">
+          {panels.map(p => {
+            const Icon = p.icon;
+            const active = isActive(p.id);
+            return (
+              <button key={p.id} onClick={() => togglePanel(p.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                  active 
+                    ? 'bg-[#002366]/40 border-[#FFD700]/20 text-[#FFD700] shadow-sm' 
+                    : 'border-white/5 text-zinc-500 hover:text-zinc-300 hover:border-white/10'
+                }`}>
+                <Icon className="w-3.5 h-3.5" />
+                {p.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 auto-rows-min">
+          <AnimatePresence mode="popLayout">
+            {panels.filter(p => isActive(p.id)).map(p => (
+              <motion.div key={p.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className={`${sizeClasses[p.size]} bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl p-4 overflow-hidden hover:border-white/[0.1] transition-colors relative group`}>
+                
+                {/* Panel header with close button */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <p.icon className="w-3.5 h-3.5 text-[#FFD700]/60" />
+                    <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{p.label}</span>
+                  </div>
+                  <button onClick={() => togglePanel(p.id)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/5">
+                    <X className="w-3 h-3 text-zinc-600" />
+                  </button>
                 </div>
 
-                {/* Bottom section: Graph + Events + Terminal */}
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-                  {/* Left area: AgentGraph + Terminal */}
-                  <div className="lg:col-span-3 space-y-4">
-                    <AgentGraph />
-                    <TerminalPanel />
-                  </div>
-
-                  {/* Right: LiveEventFeed */}
-                  <div className="lg:col-span-2">
-                    <LiveEventFeed />
-                  </div>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="terminal"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                {/* Full terminal view */}
-                <div className="flex flex-col gap-4">
-                  {/* Mini mission cards row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {missions.map((mission, i) => (
-                      <MissionCard key={mission.name} {...mission} index={i} />
-                    ))}
-                  </div>
-
-                  {/* Terminal expanded */}
-                  <div
-                    className="rounded-xl border overflow-hidden"
-                    style={{
-                      background: '#0a0a14',
-                      borderColor: 'rgba(42,42,74,0.6)',
-                    }}
-                  >
-                    <div
-                      className="flex items-center justify-between px-4 py-2.5"
-                      style={{ borderBottom: '1px solid rgba(42,42,74,0.4)' }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-hermes-green" style={{ boxShadow: '0 0 6px rgba(74,222,128,0.5)' }} />
-                        <span className="text-sm font-semibold text-white">Terminal — Full Control</span>
-                      </div>
-                      <button
-                        onClick={() => setViewMode('split')}
-                        className="text-xs px-2 py-1 rounded cursor-pointer transition-colors"
-                        style={{ background: 'rgba(129,140,248,0.1)', color: '#818cf8' }}
-                      >
-                        Split View
-                      </button>
+                {/* Panel content */}
+                <div className="overflow-y-auto max-h-[calc(100vh-300px)]">
+                  {p.id === 'missions' && (
+                    <div className="grid gap-3">
+                      <MissionCard id="ecommerce" name="Ecommerce" icon="📦" status="idle"
+                        metrics={[{value:'€0',label:'Rev'},{value:'0',label:'SKUs'},{value:'—',label:'Next'}]}
+                        alert={{level:'info',text:'SKU-001 closed — new direction TBD'}} index={0} />
+                      <MissionCard id="berea" name="Penzión BEREA" icon="🏨" status="active"
+                        metrics={[{value:'3,002',label:'Leads'},{value:'236',label:'Hot'},{value:'Brevo',label:'CRM'}]}
+                        alert={{level:'warn',text:'NemoCLaw bridge pending — then push leads'}} index={1} />
+                      <MissionCard id="leanta" name="Leanta AI" icon="🤖" status="active"
+                        metrics={[{value:'3',label:'Niches'},{value:'0',label:'Props'},{value:'Live',label:'Dashboard'}]}
+                        alert={{level:'ok',text:'Dashboard deployed — 3 proposals to draft'}} index={2} />
                     </div>
-                    <div style={{ height: '480px', padding: '2px' }}>
+                  )}
+                  {p.id === 'graph' && <AgentGraph />}
+                  {p.id === 'traffic' && <TrafficLightBoard />}
+                  {p.id === 'gantt' && <GanttChart />}
+                  {p.id === 'mindmap' && <MindMap />}
+                  {p.id === 'honcho' && <HonchoPanel />}
+                  {p.id === 'events' && <LiveEventFeed />}
+                  {p.id === 'terminal' && (
+                    <div className="h-[500px]">
                       <TerminalPanel />
                     </div>
-                  </div>
-
-                  {/* Event feed below */}
-                  <LiveEventFeed />
+                  )}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </main>
 
-        {/* Footer */}
-        <footer
-          className="border-t py-3 text-center text-[10px] sm:text-xs"
-          style={{ borderColor: 'rgba(42,42,74,0.3)', color: '#6b7280', background: 'rgba(15,15,26,0.4)' }}
-        >
-          HERMES Mission Control v1.0 · Powered by Nous Research
-        </footer>
+                {/* Bento border glow */}
+                <div className="absolute inset-0 rounded-2xl pointer-events-none"
+                  style={{ boxShadow: `inset 0 1px 0 ${p.id === 'traffic' ? 'rgba(239,68,68,0.05)' : 'rgba(255,215,0,0.03)'}` }} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
